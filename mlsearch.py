@@ -127,24 +127,24 @@ class MLSearch:
 
 	def train(self, X, y):
 
-		# --------------- FIT & TRANSFORM TO VECTORS ----------------
+		# FIT & TRANSFORM TO VECTORS
 
 		self.fit_transformer(self.vectorizer, X)
 		vectors = self.transform(self.vectorizer, X)
 
 		# stopwords = self.make_stopwords_list(vectors)
 
-		# ------------ FIT & TRANSFORM VECTORS WITH FREQ ------------
+		# FIT & TRANSFORM VECTORS WITH FREQ
 
 		self.fit_transformer(self.tfidf, vectors)
 		vectors = self.transform(self.tfidf, vectors)
 
-		# -------------------- FEATURES SELECTION -------------------
+		# FEATURES SELECTION
 
 		self.fit_transformer(self.selector, vectors)
 		vectors = self.transform(self.selector, vectors)
 
-		# ------------------------ TRAINING -------------------------
+		# TRAINING
 
 		self.fit_model(vectors, y)
 
@@ -161,16 +161,13 @@ if __name__ == "__main__":
 	
 	search.train(competitor_products, my_products)
 
-	search.save()
-
-	new_search = MLSearch(rows_count)
-
-	new_search.load()
-
 	inputs = ['Arctic Cooling Freezer i11',
 	'Arctic Cooling Freezer i1',
 	'Циркуляционный насос Насосы плюс оборудование BPS 25-6-130',
+	'Циркуляционный насос Насосы плюс оборудование BS 25-6-130',
 	'Пенал мягкий, 3 отделения, Goal',
+	'Пенал школьный мягкий Yes Paul Frank 20*8*3см 531116',
+	'Пенал 1 Вересня Paul Frank (530734)',
 	'Весы электронные BabyOno 291',
 	'Весы электронные BabyOno 293',
 	'Весы электронные BabyOno',
@@ -182,8 +179,28 @@ if __name__ == "__main__":
 	'Call of Duty: Black Ops 2 Uprising (DLC)',
 	'Doom 4 [PC-Jewel]']
 
-	for input in inputs:
-		output, proba = new_search.predict(input)
-		print('{0} => {1} \nwith proba = {2}'.format(input, output, proba))
+	# coef = new_search.clf.coef_[np.where(new_search.clf.classes_ == 'BabyOno 291 (1001.291)')][0]
 
-	search.evaluate(competitor_products, my_products)
+	# word_probas = dict(zip(new_search.vectorizer.vocabulary_.keys(), coef))
+	
+	# print([k for k, v in word_probas.items() if v > 0.0])
+
+	# print('babyono ' + str(word_probas['babyono']))
+	# print('электронные ' + str(word_probas['электронные']))
+	# print('весы ' + str(word_probas['весы']))
+	# print('291 ' + str(word_probas['291']))
+
+	data = []
+
+	for input in inputs:
+		output, proba = search.predict(input)
+		modified_proba = proba
+		for word in new_search.vectorizer.build_tokenizer()(output.lower()):
+			if(word in input.lower()):
+				modified_proba *= 1.5
+		print('{0} => {1} \nwith proba = {2}'.format(input, output, proba))
+		data.append((input, output, proba, modified_proba))
+
+	pd.DataFrame(data, columns = ['input', 'output', 'proba', 'modified_proba']).to_csv('results.csv', ';')
+
+	# search.evaluate(competitor_products, my_products)
