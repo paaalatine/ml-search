@@ -4,8 +4,6 @@ from flask import jsonify
 
 from mlsearch import MLSearch
 
-from webargs import fields
-from webargs.flaskparser import use_args
 
 app = Flask(__name__)
 
